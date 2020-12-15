@@ -1,0 +1,33 @@
+import pika
+import ssl
+
+# Setup TLS Connection
+# --------------------
+credentials = pika.PlainCredentials(
+    < USER >, < PASSWORD > )
+server = < RMQ SERVER NAME >
+context = ssl.create_default_context(cafile="ca_certificate.pem")
+context.load_cert_chain("client_certificate.pem",
+                        "client_key.pem")
+ssl_options = pika.SSLOptions(context, server)
+parameters = pika.ConnectionParameters(
+    server, < PORT >, < VHOST > , credentials, ssl_options=ssl_options, socket_timeout=10)
+
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+
+# Declare a queue, create if needed
+# ---------------------------------
+channel.queue_declare(queue='hello')
+
+# Define Callback function to process each message
+# ------------------------------------------------
+
+
+def callback(ch, method, properties, body):
+    print("[x] Received: %r" % (body,))
+
+
+channel.basic_consume(
+    queue='hello', on_message_callback=callback, auto_ack=True)
+channel.start_consuming()

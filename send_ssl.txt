@@ -1,0 +1,30 @@
+import pika
+import ssl
+
+# Setup TLS Connection
+# --------------------
+credentials = pika.PlainCredentials(
+    < USER > , < PASSWORD > )
+server = < RMQ SERVER NAME >
+context = ssl.create_default_context(cafile="ca_certificate.pem")
+context.load_cert_chain("client_certificate.pem",
+                        "client_key.pem")
+ssl_options = pika.SSLOptions(context, server)
+parameters = pika.ConnectionParameters(
+    server, < PORT > , < VHOST > , credentials, ssl_options=ssl_options, socket_timeout=10)
+
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+
+# Declare a new queue
+# -------------------
+channel.queue_declare(queue='hello')
+
+# Send messages to the queue and close connection
+# -----------------------------------------------
+for i in range(10000):
+    body = "Hello World! (" + str(i) + ')'
+    channel.basic_publish(exchange='', routing_key='hello', body=body)
+
+print("[x] Sent! Hello Word!")
+connection.close()
